@@ -1,13 +1,12 @@
-import io
 import os
 from setuptools import setup
 
 DESCRIPTION = 'Darwinex tick data downloader Python API'
-here = os.path.abspath(os.path.dirname(__file__))
+# ere = os.path.abspath(os.path.dirname(__file__))
 
 try:
-    with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-        long_description = '\n' + f.read()
+    with open('README.md') as f:
+        long_description = f.read()
 except FileNotFoundError:
     long_description = DESCRIPTION
 

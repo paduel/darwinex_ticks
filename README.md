@@ -12,7 +12,7 @@ The data is returned as a Pandas dataframe.
 
 ## Installation
 
-`pip install darwinex_ticks`
+`pip install Darwinex-ticks`
 
 Pandas library is required. Ipywidgets opcional, only for progress bar in 
 Jupyter notebooks.
