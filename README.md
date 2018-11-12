@@ -14,7 +14,7 @@ The data is returned as a Pandas dataframe.
 
 `pip install Darwinex-ticks`
 
-Pandas library is required. Ipywidgets opcional, only for progress bar in 
+Pandas library is required. Ipywidgets optional, only for progress bar in 
 Jupyter notebooks.
 
 
