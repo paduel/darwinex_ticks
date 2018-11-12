@@ -1,6 +1,6 @@
 import io
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 DESCRIPTION = 'Darwinex tick data downloader Python API'
 here = os.path.abspath(os.path.dirname(__file__))
@@ -23,6 +23,4 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    python_requires=['pandas'],
-    extras_require={'progress bar': ['ipywidgets']},
 )
