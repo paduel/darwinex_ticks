@@ -24,6 +24,9 @@ class DarwinexTicksConnection:
                  dwx_ftp_hostname='<insert Darwinex Tick Data FTP host>',
                  dwx_ftp_port=21):
 
+        if dwx_ftp_hostname[:6] == 'ftp://':
+            dwx_ftp_hostname = dwx_ftp_hostname[6:]
+
         # # Dictionary DB to hold dictionary objects in FX/Hour format
         # self._asset_db = {}
 
