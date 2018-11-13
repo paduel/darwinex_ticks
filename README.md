@@ -1,10 +1,10 @@
 # Darwinex-ticks
 Darwinex tick data python API.
 
-The broker Darwinex offer to their real accounts a historical data dowload 
+The broker Darwinex offers to their real accounts a historical data dowload 
 service using a ftp server. 
 
-This basic API connect with your server account 
+This basic API connects with your server account 
 and download the data of one or several assets available. 
 
 The data is returned as a Pandas dataframe. 
