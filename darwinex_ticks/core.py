@@ -68,7 +68,7 @@ class DarwinexTicksConnection:
 
     def _get_ticks(self, asset='EURUSD', start=None, end=None,
                    cond=None, verbose=False, side='both',
-                   separated=False):
+                   separated=False, fill=True):
 
         if asset not in self.available_assets:
             raise KeyError('Asset {} not available'.format(asset))
@@ -146,6 +146,9 @@ class DarwinexTicksConnection:
         if len(posits) == 2:
             if not separated:
                 data = _pd.concat([data[posit] for posit in posits], axis=1)
+                if fill:
+                    data = data.ffill()
+
         else:
             data = data[posits[0]]
 
@@ -157,7 +160,7 @@ class DarwinexTicksConnection:
 
     def ticks_from_darwinex(self, assets, start=None, end=None,
                             cond=None, verbose=False, side='both',
-                            separated=False):
+                            separated=False, fill=True):
         """
 
         :param assets: str with asset or list str assets to download data
@@ -170,6 +173,8 @@ class DarwinexTicksConnection:
         :param side: str 'ask', 'bid' or 'both'
         :param separated: True to return a dict with ask and bid separated,
         just available for one asset.
+        :param fill: True, fill side gaps when both side are return. False,
+        return NaN when one side don't change at this moment.
         :return: pandas.core.frame.DataFrame with ticks data for assets and
         conditions asked, or a dict of dataframe if separated is True and
         only one asset is asked.
@@ -183,13 +188,13 @@ class DarwinexTicksConnection:
                                                    end=end, cond=cond,
                                                    verbose=verbose,
                                                    side=side,
-                                                   separated=False)
+                                                   separated=False, fill=fill)
             data = _pd.concat(data_dict, keys=data_dict.keys())
         else:
             data = self._get_ticks(assets, start=start,
                                    end=end, cond=cond,
                                    verbose=verbose, side=side,
-                                   separated=separated)
+                                   separated=separated, fill=fill)
         return data
 
     #########################################################################
