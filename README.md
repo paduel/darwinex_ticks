@@ -31,6 +31,6 @@ dwt = darwinex_ticks.DarwinexTicksConnection(dwx_ftp_user='<your Darwinex userna
                        dwx_ftp_port='<assigned port>')
                        
 data = dwt.ticks_from_darwinex('EURUSD', start='2018-08-02 08', 
-                                end='2018-08-02 08')                 
+                                end='2018-08-02 12')                 
 ```
 You could check the example notebook too.

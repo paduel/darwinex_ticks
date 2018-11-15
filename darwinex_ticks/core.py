@@ -1,7 +1,4 @@
-# import os
-# __path__=[os.path.dirname(os.path.abspath(__file__))]
-# from . \
-#
+# -*- coding: utf-8 -*-
 
 from __future__ import print_function
 
@@ -12,6 +9,7 @@ from io import BytesIO as _BytesIO
 import sys as _sys
 
 import pandas as _pd
+from pandas.core.base import PandasObject
 
 
 class DarwinexTicksConnection:
@@ -197,4 +195,37 @@ class DarwinexTicksConnection:
                                    separated=separated, fill=fill)
         return data
 
-    #########################################################################
+
+# TOOLS
+
+def spread(data, ask='Ask', bid='Bid', pip=None):
+    if not all([_ in data.columns for _ in [ask, bid]]):
+        raise KeyError('Parameters ask and bid must be column names')
+    spreads = data[ask].sub(data[bid])
+    if pip is not None:
+        spreads = spreads.div(pip)
+    return spreads
+
+
+def to_mtcsv(data, path=None, decimals=5):
+    csv = data[['Ask', 'Bid']].to_csv(path, header=False,
+                                      float_format='%.{}f'.format(decimals))
+    return csv
+
+
+def price(data, method='midpoint', ask='Ask', bid='Bid', ask_size='Ask_size',
+          bid_size='Bid_size'):
+    if method == 'midpoint':
+        price = data[[ask, bid]].mean(axis=1)
+    elif method == 'weighted':
+        price = (data[ask].mul(data[ask_size]).add(
+            data[bid].mul(data[bid_size]))).div(
+            data[ask_size].add(data[bid_size]))
+    else:
+        raise KeyError('Valid param midpoint must be passed')
+    return price
+
+
+PandasObject.spread = spread
+PandasObject.to_mtcsv = to_mtcsv
+PandasObject.price = price
