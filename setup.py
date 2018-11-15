@@ -5,14 +5,14 @@ DESCRIPTION = 'Darwinex tick data downloader Python API'
 # ere = os.path.abspath(os.path.dirname(__file__))
 
 try:
-    with open('README.md', 'r') as f:
+    with open('README.md') as f:
         long_description = f.read()
 except FileNotFoundError:
     long_description = DESCRIPTION
 
 setup(
     name='Darwinex-ticks',
-    version='0.0.9',
+    version='0.0.10',
     packages=find_packages(),
     url='https://github.com/paduel/darwinex_ticks',
     license='MIT',

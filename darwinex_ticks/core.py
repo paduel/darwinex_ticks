@@ -35,6 +35,13 @@ class DarwinexTicksConnection:
         self._widgets_available = True
         print('Connected Darwinex Ticks Data Server')
 
+    def close(self):
+        try:
+            msg = self._ftpObj.quit()
+        except:
+            msg = self._ftpObj.close()
+        return msg
+
     def list_of_files(self, asset='EURUSD'):
         """Return a dataframe with the files on server for a asset.
         :param asset: str, a Darwinex asset
@@ -222,7 +229,7 @@ def price(data, method='midpoint', ask='Ask', bid='Bid', ask_size='Ask_size',
             data[bid].mul(data[bid_size]))).div(
             data[ask_size].add(data[bid_size]))
     else:
-        raise KeyError('Valid param midpoint must be passed')
+        raise KeyError('Valid param method must be passed')
     return price
 
 
