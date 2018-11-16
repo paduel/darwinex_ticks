@@ -55,12 +55,16 @@ class DarwinexTicksConnection:
                                                                    expand=True)
         _dir.drop(0, axis=1, inplace=True)
         _dir.hour = _dir.hour.str[:2]
-        _dir['time'] = _pd.to_datetime(_dir.date + ' ' + _dir.hour)
-        _dir.set_index('time', drop=True, inplace=True)
+        _dir.index = _pd.to_datetime(_dir.date + ' ' + _dir.hour)
+        _dir.index.name = 'time'
         return _dir
 
-    def _dir(self, folder=None):
+    def _dir(self, folder=''):
         return self._ftpObj.nlst(folder)[2:]
+
+    @property
+    def assets(self):
+        return self._dir('')
 
     def _get_file(self, _file):
         self._virtual_dl = _BytesIO()
@@ -69,11 +73,11 @@ class DarwinexTicksConnection:
 
     @staticmethod
     def _parser(_data):
-        return _pd.to_datetime(_data, unit='ms', utc=False)
+        return _pd.to_datetime(_data, unit='ms', utc=True)
 
     def _get_ticks(self, asset='EURUSD', start=None, end=None,
                    cond=None, verbose=False, side='both',
-                   separated=False, fill=True):
+                   separated=False, fill=True, darwinex_time=False):
 
         if asset not in self.available_assets:
             raise KeyError('Asset {} not available'.format(asset))
@@ -161,11 +165,13 @@ class DarwinexTicksConnection:
         if wrong_download > 0:
             print('{} files could not be downloaded.'.format(wrong_download))
 
+        if darwinex_time:
+            data.index = _index_utc_to_mt_time(data.index)
         return data
 
     def ticks_from_darwinex(self, assets, start=None, end=None,
                             cond=None, verbose=False, side='both',
-                            separated=False, fill=True):
+                            separated=False, fill=True, darwinex_time=False):
         """
 
         :param assets: str with asset or list str assets to download data
@@ -178,12 +184,20 @@ class DarwinexTicksConnection:
         :param side: str 'ask', 'bid' or 'both'
         :param separated: True to return a dict with ask and bid separated,
         just available for one asset.
-        :param fill: True, fill side gaps when both side are return. False,
-        return NaN when one side don't change at this moment.
+        :param fill: boolean, if True fill side gaps when both side are
+        return. False, return NaN when one side don't change at this moment.
         :return: pandas.core.frame.DataFrame with ticks data for assets and
         conditions asked, or a dict of dataframe if separated is True and
         only one asset is asked.
+        :param darwinex_time: boolean, False (default) use the UTC time zone,
+        the same that the FTP files uses. If True the Darwinex Metatrader
+        timezone is used, GMT+2 but with the New York DST.
+
         """
+
+        if darwinex_time:
+            start = _dw_time_to_utc(start)
+            end = _dw_time_to_utc(end)
 
         if isinstance(assets, list):
             data_dict = {}
@@ -193,28 +207,72 @@ class DarwinexTicksConnection:
                                                    end=end, cond=cond,
                                                    verbose=verbose,
                                                    side=side,
-                                                   separated=False, fill=fill)
+                                                   separated=False, fill=fill,
+                                                   darwinex_time=darwinex_time)
             data = _pd.concat(data_dict, keys=data_dict.keys())
         else:
             data = self._get_ticks(assets, start=start,
                                    end=end, cond=cond,
                                    verbose=verbose, side=side,
-                                   separated=separated, fill=fill)
+                                   separated=separated, fill=fill,
+                                   darwinex_time=darwinex_time)
         return data
 
 
 # TOOLS
 
+def _dw_time_to_utc(times):
+    times = ((_pd.to_datetime(times) - _pd.Timedelta('07:00:00')).tz_localize(
+        'America/New_York').tz_convert('UTC'))
+    return times.strftime('%Y-%m-%d %H')
+
+
+def to_darwinex_time(data):
+    if data.index.is_all_dates:
+        data.index = (
+                (data.index.tz_convert('America/New_York')) + _pd.Timedelta(
+            '07:00:00')).tz_localize(None).tz_localize('Etc/GMT+2')
+    else:
+        raise KeyError('Dataframe index must be dates')
+    return data
+
+
+def _index_utc_to_mt_time(serie):
+    if serie.is_all_dates:
+        serie = ((serie.tz_convert('America/New_York')) +
+                 _pd.Timedelta('07:00:00')).tz_localize(
+            None).tz_localize('Etc/GMT+2')
+    else:
+        raise KeyError('Dataframe index must be dates')
+    return serie
+
+
 def spread(data, ask='Ask', bid='Bid', pip=None):
+    """
+    Return the spread between ask and bid.
+    :param data: pandas dataframe with Ask and Bid columns
+    :param ask: str, name of the Ask column
+    :param bid: str, name of the Bid column
+    :param pip: float, if  pip is passed the spread is in pip units.
+    :return: pandas serie with the spread
+    """
     if not all([_ in data.columns for _ in [ask, bid]]):
         raise KeyError('Parameters ask and bid must be column names')
-    spreads = data[ask].sub(data[bid])
+    _spreads = data.Ask.values - data.Bid.values
     if pip is not None:
-        spreads = spreads.div(pip)
-    return spreads
+        _spreads = _spreads / pip
+    return _pd.Series(_spreads, index=data.index)
 
 
 def to_mtcsv(data, path=None, decimals=5):
+    """
+    Save a downloaded ticks dataframe as a csv with a optimized format to be
+    imported by MetaTrader.
+    :param data: pandas dataframe with Ask and Bid columns
+    :param path: file path to save
+    :param decimals: number of decimals to save
+    :return: str if path is None
+    """
     csv = data[['Ask', 'Bid']].to_csv(path, header=False,
                                       float_format='%.{}f'.format(decimals))
     return csv
@@ -222,15 +280,24 @@ def to_mtcsv(data, path=None, decimals=5):
 
 def price(data, method='midpoint', ask='Ask', bid='Bid', ask_size='Ask_size',
           bid_size='Bid_size'):
+    """
+    Return the midpoint or the weighted price of ask and bid
+    :param data: pandas dataframe with Ask and Bid columns
+    :param method: str, 'midpoint', or 'weighted' to use the sizes
+    :param ask:  str, name of the columns with the ask
+    :param bid: str, name of the columns with the bid
+    :param ask_size: str, name of the columns with the ask size
+    :param bid_size: str, name of the columns with the bid size
+    :return:  pandas serie with price
+    """
     if method == 'midpoint':
-        price = data[[ask, bid]].mean(axis=1)
+        _price = (data[ask].values + data[bid].values) / 2
     elif method == 'weighted':
-        price = (data[ask].mul(data[ask_size]).add(
-            data[bid].mul(data[bid_size]))).div(
-            data[ask_size].add(data[bid_size]))
+        _price = (data[ask].values * data[ask_size].values + data[bid].values *
+                  data[bid_size].values) / (data[ask_size] + data[bid_size])
     else:
         raise KeyError('Valid param method must be passed')
-    return price
+    return _pd.Series(_price, index=data.index)
 
 
 PandasObject.spread = spread
