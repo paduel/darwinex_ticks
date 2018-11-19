@@ -100,15 +100,19 @@ class DarwinexTicksConnection:
 
         data = {}
 
-        if 'ipywidgets' in _sys.modules:
-            from ipywidgets import FloatProgress as _FloatProgress
-            from IPython.display import display as _display
-            progressbar = _FloatProgress(min=0, max=max_bar)
-            if max_bar > 1:
-                _display(progressbar)
-        elif self._widgets_available:
-            print('You must install ipywidgets module to display progress bar '
-                  'for notebooks.  Use "pip install ipywidgets"')
+        if _isnotebook():
+            if 'ipywidgets' in _sys.modules:
+                from ipywidgets import FloatProgress as _FloatProgress
+                from IPython.display import display as _display
+                progressbar = _FloatProgress(min=0, max=max_bar)
+                if max_bar > 1:
+                    _display(progressbar)
+            elif self._widgets_available:
+                print(
+                    'You must install ipywidgets module to display progress bar '
+                    'for notebooks.  Use "pip install ipywidgets"')
+                self._widgets_available = False
+        else:
             self._widgets_available = False
 
         right_download = 0
@@ -148,6 +152,8 @@ class DarwinexTicksConnection:
 
                 if self._widgets_available:
                     progressbar.value += 1
+                else:
+                    print('*', end="", flush=True),
 
             data[posit] = _pd.concat(data_rec, sort=True, axis=0,
                                      verify_integrity=False)
@@ -186,18 +192,22 @@ class DarwinexTicksConnection:
         just available for one asset.
         :param fill: boolean, if True fill side gaps when both side are
         return. False, return NaN when one side don't change at this moment.
-        :return: pandas.core.frame.DataFrame with ticks data for assets and
-        conditions asked, or a dict of dataframe if separated is True and
-        only one asset is asked.
         :param darwinex_time: boolean, False (default) use the UTC time zone,
         the same that the FTP files uses. If True the Darwinex Metatrader
         timezone is used, GMT+2 but with the New York DST.
+        :return: pandas.core.frame.DataFrame with ticks data for assets and
+        conditions asked, or a dict of dataframe if separated is True and
+        only one asset is asked.
+
 
         """
 
         if darwinex_time:
-            start = _dw_time_to_utc(start)
-            end = _dw_time_to_utc(end)
+            if cond:
+                cond = _dw_time_to_utc(cond)
+            else:
+                start = _dw_time_to_utc(start)
+                end = _dw_time_to_utc(end)
 
         if isinstance(assets, list):
             data_dict = {}
@@ -220,6 +230,19 @@ class DarwinexTicksConnection:
 
 
 # TOOLS
+
+def _isnotebook():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':
+            return True  # Jupyter notebook or qtconsole
+        elif shell == 'TerminalInteractiveShell':
+            return False  # Terminal running IPython
+        else:
+            return False  # Other type (?)
+    except NameError:
+        return False
+
 
 def _dw_time_to_utc(times):
     times = ((_pd.to_datetime(times) - _pd.Timedelta('07:00:00')).tz_localize(

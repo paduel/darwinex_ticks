@@ -10,7 +10,7 @@ except FileNotFoundError:
 
 setup(
     name='Darwinex-ticks',
-    version='0.1.0',
+    version='0.1.1',
     packages=find_packages(),
     url='https://github.com/paduel/darwinex_ticks',
     license='MIT',
