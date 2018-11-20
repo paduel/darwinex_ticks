@@ -6,9 +6,9 @@ try:
     import configparser
 except ModuleNotFoundError:
     import ConfigParser as configparser
-from core import *
+from .core import *
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Antonio Rodriguez (Paduel)"
 
 

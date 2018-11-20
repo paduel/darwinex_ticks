@@ -36,7 +36,7 @@ data = dwt.ticks_from_darwinex('EURUSD', start='2018-08-02 08',
 You could check the example notebook too.
 
 
-##Command line usage.
+## Command line usage.
 
 It's possible use the package at terminal. 
 You need have installed python, pandas and darwinex_ticks.
