@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import configparser
+
+try:
+    import configparser
+except ModuleNotFoundError:
+    import ConfigParser as configparser
 from core import *
 
 __version__ = "0.1.1"
 __author__ = "Antonio Rodriguez (Paduel)"
 
 
-def download(args=None):
-    args = argparser(args)
+def _download(args=None):
+    args = _argparser(args)
 
     if not args.user:
         try:
@@ -39,7 +43,7 @@ def download(args=None):
                                      end=args.end,
                                      cond=args.condition, verbose=False,
                                      side='both', separated=False,
-                                     fill=True, darwinex_time=args.dwtime)
+                                     fill=True, darwinex_time=not args.utc)
 
     for _asset in args.assets:
         _filename = _get_filename(args)
@@ -75,40 +79,41 @@ def _get_filename(args):
     return _filename
 
 
-def argparser(pargs=None):
-    parser = argparse.ArgumentParser(
+def _argparser(pargs=None):
+    _parser = argparse.ArgumentParser(
         description='Tool for download Darwinex ticks data'
     )
-    parser.add_argument('assets', help='Assets to download tick data',
-                        nargs='+')
-    parser.add_argument('--user', '-u', help='Darwinex ftp service user name')
-    parser.add_argument('--password', '-w', help='Darwinex ftp service '
-                                                 'password')
-    parser.add_argument('--hostname', '-n', default='tickdata.darwinex.com',
-                        help='Darwinex ftp host name')
-    parser.add_argument('--port', '-p', default=21, help='Darwinex ftp port '
-                                                         'number', type=int)
+    _parser.add_argument('assets', help='Assets to download tick data',
+                         nargs='+')
+    _parser.add_argument('--user', '-u', help='Darwinex ftp service user name')
+    _parser.add_argument('--password', '-w', help='Darwinex ftp service '
+                                                  'password')
+    _parser.add_argument('--hostname', '-h', default='tickdata.darwinex.com',
+                         help='Darwinex ftp host name')
+    _parser.add_argument('--port', '-p', default=21, help='Darwinex ftp port '
+                                                          'number', type=int)
 
-    parser.add_argument('--path', '-f', help='path to save the csv files'
-                                             'the downloaded data')
-    parser.add_argument('--condition', '-c', help='Datetime condition e.g. '
-                                                  '"2018-10"')
-    parser.add_argument('--start', '-s', help='Start of period to download, '
-                                              'if a condition is passed, '
-                                              'start is ignored')
-    parser.add_argument('--end', '-e', help='End of period to download, '
-                                            'if a condition is passed, '
-                                            'start is ignored')
-    parser.add_argument('--dwtime', '-t', help='Use darwinex time, False use '
-                                               'UTC', type=bool,
-                        default=True, nargs='?')
-    parser.add_argument('-g', '--config_save', help='Save ftp server params '
-                                                    'and path at config file',
-                        action='store_true')
+    _parser.add_argument('--path', '-f', help='path to save the csv files'
+                                              'the downloaded data')
+    _parser.add_argument('--condition', '-c', help='Datetime condition e.g. '
+                                                   '"2018-10", only works '
+                                                   'with UTC time')
+    _parser.add_argument('--start', '-s', help='Start of period to download, '
+                                               'if a condition is passed, '
+                                               'start is ignored')
+    _parser.add_argument('--end', '-e', help='End of period to download, '
+                                             'if a condition is passed, '
+                                             'start is ignored')
+    _parser.add_argument('--utc', '-t', help='Use UTC instead of '
+                                             'default darwinex time',
+                         const=True, default=False, nargs='?')
+    _parser.add_argument('--config_save', '-g', help='Save ftp server params '
+                                                     'and path at config file',
+                         const=True, default=False, nargs='?')
 
-    args = parser.parse_args(pargs)
+    args = _parser.parse_args(pargs)
     return args
 
 
 if __name__ == '__main__':
-    download()
+    _download()

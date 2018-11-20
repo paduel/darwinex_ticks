@@ -34,3 +34,18 @@ data = dwt.ticks_from_darwinex('EURUSD', start='2018-08-02 08',
                                 end='2018-08-02 12')                 
 ```
 You could check the example notebook too.
+
+
+##Command line usage.
+
+It's possible use the package at terminal. 
+You need have installed python, pandas and darwinex_ticks.
+
+`python darwinex_ticks EURGBP EURGBP USDJPY -u paduel -w kyK8omxZm8pxp -h 
+tickdata.darwinex.com -s "2018-10-08 10" -e "2018-10-08 12" -g`
+
+This command line connect the darwinex ticks data ftp  with 
+the user, password and hostname passed, download the ticks data
+ of EURGBP, EURGBP and USDJPY from 2018/10/08 10:00 to 28/10/08 12:59, and 
+ save (-g) user, password and hostname at config file, son the next time you 
+ don't need to pass its. 

@@ -6,7 +6,8 @@ from __future__ import print_function
 
 from ftplib import FTP as _FTP
 from io import BytesIO as _BytesIO
-import sys as _sys
+from sys import modules as _modules
+from time import sleep
 
 import pandas as _pd
 from pandas.core.base import PandasObject
@@ -33,6 +34,8 @@ class DarwinexTicksConnection:
         self._virtual_dl = None
         self.available_assets = self._dir('')
         self._widgets_available = True
+        self.num_retries = 3
+        self.await_time = 10
         print('Connected Darwinex Ticks Data Server')
 
     def close(self):
@@ -101,7 +104,7 @@ class DarwinexTicksConnection:
         data = {}
 
         if _isnotebook():
-            if 'ipywidgets' in _sys.modules:
+            if 'ipywidgets' in _modules:
                 from ipywidgets import FloatProgress as _FloatProgress
                 from IPython.display import display as _display
                 progressbar = _FloatProgress(min=0, max=max_bar)
@@ -124,21 +127,28 @@ class DarwinexTicksConnection:
             data_rec = []
             #             print(_files)
             for _file in _files:
-
+                pos = 'Ask' if 'ASK' in _file else 'Bid'
                 try:
-                    self._get_file(_file)
+                    data_pro = None
+                    for retry in range(self.num_retries):
+                        self._get_file(_file)
+                        # Construct DataFrame
+                        data_pro = [
+                            _pd.read_table(self._virtual_dl, compression='gzip',
+                                           sep=',', header=None,
+                                           lineterminator='\n',
+                                           names=['Time', pos, pos + '_size'],
+                                           index_col='Time', parse_dates=[0],
+                                           date_parser=self._parser)]
+                        if len(data_pro) > 0:
+                            right_download += 1
+                            break
+                        else:
+                            sleep(self.await_time)
+                            if verbose:
+                                print('File missing, retrying.')
 
-                    # Construct DataFrame
-                    pos = 'Ask' if 'ASK' in _file else 'Bid'
-
-                    data_rec += [
-                        _pd.read_table(self._virtual_dl, compression='gzip',
-                                       sep=',', header=None,
-                                       lineterminator='\n',
-                                       names=['Time', pos, pos + '_size'],
-                                       index_col='Time', parse_dates=[0],
-                                       date_parser=self._parser)]
-                    right_download += 1
+                    data_rec += data_pro
 
                     if verbose is True:
                         print('Downloaded file {}'.format(_file))
@@ -194,7 +204,8 @@ class DarwinexTicksConnection:
         return. False, return NaN when one side don't change at this moment.
         :param darwinex_time: boolean, False (default) use the UTC time zone,
         the same that the FTP files uses. If True the Darwinex Metatrader
-        timezone is used, GMT+2 but with the New York DST.
+        timezone is used, GMT+2 but with the New York DST. If True, start and
+        end must be passed, cond is not accepted.
         :return: pandas.core.frame.DataFrame with ticks data for assets and
         conditions asked, or a dict of dataframe if separated is True and
         only one asset is asked.
@@ -204,8 +215,9 @@ class DarwinexTicksConnection:
 
         if darwinex_time:
             if cond:
-                cond = _dw_time_to_utc(cond)
-            else:
+                raise ValueError('With Darwinex time, start and end params must'
+                                 ' be used, not cond.')
+            elif start:
                 start = _dw_time_to_utc(start)
                 end = _dw_time_to_utc(end)
 
