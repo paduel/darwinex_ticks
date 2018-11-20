@@ -8,7 +8,7 @@ except ModuleNotFoundError:
     import ConfigParser as configparser
 from .core import *
 
-__version__ = "0.1.2"
+__version__ = "0.1.4"
 __author__ = "Antonio Rodriguez (Paduel)"
 
 
@@ -88,7 +88,7 @@ def _argparser(pargs=None):
     _parser.add_argument('--user', '-u', help='Darwinex ftp service user name')
     _parser.add_argument('--password', '-w', help='Darwinex ftp service '
                                                   'password')
-    _parser.add_argument('--hostname', '-h', default='tickdata.darwinex.com',
+    _parser.add_argument('--hostname', '-n', default='tickdata.darwinex.com',
                          help='Darwinex ftp host name')
     _parser.add_argument('--port', '-p', default=21, help='Darwinex ftp port '
                                                           'number', type=int)
