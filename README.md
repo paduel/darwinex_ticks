@@ -41,7 +41,7 @@ You could check the example notebook too.
 It's possible use the package at terminal. 
 You need have installed python, pandas and darwinex_ticks.
 
-`python -m darwinex_ticks EURGBP EURGBP USDJPY -u paduel -w kyK8omxZm8pxp -h 
+`python -m darwinex_ticks EURGBP EURGBP USDJPY -u paduel -w kyK8omxZm8pxp -n 
 tickdata.darwinex.com -s "2018-10-08 10" -e "2018-10-08 12" -g`
 
 This command line connect the darwinex ticks data ftp  with 
