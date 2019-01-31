@@ -2,13 +2,14 @@
 
 import argparse
 
+
 try:
     import configparser
-except ModuleNotFoundError:
+except ImportError:
     import ConfigParser as configparser
 from .core import *
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 __author__ = "Antonio Rodriguez (Paduel)"
 
 

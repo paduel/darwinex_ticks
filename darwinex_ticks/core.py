@@ -163,7 +163,10 @@ class DarwinexTicksConnection:
                 if self._widgets_available:
                     progressbar.value += 1
                 else:
-                    print('*', end="", flush=True),
+                    try:
+                        print('*', end="", flush=True),
+                    except TypeError:
+                        print('*', end=""),
 
             data[posit] = _pd.concat(data_rec, sort=True, axis=0,
                                      verify_integrity=False)
