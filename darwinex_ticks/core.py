@@ -86,9 +86,9 @@ class DarwinexTicksConnection:
             raise KeyError('Asset {} not available'.format(asset))
 
         if cond is None:
-            _files_df = self.list_of_files(asset)[start: end]
+            _files_df = self.list_of_files(asset).loc[start: end]
         else:
-            _files_df = self.list_of_files(asset)[cond]
+            _files_df = self.list_of_files(asset).loc[cond]
 
         if verbose is True:
             print("\n[INFO] Retrieving data from Darwinex Tick Data "
